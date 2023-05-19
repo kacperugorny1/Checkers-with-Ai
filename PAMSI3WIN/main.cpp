@@ -9,18 +9,31 @@
 #define white_turn 1
 #define black_turn -1
 
+//todo
+//ruch gdy z tylu przeciwnik? idk why legal moves i make a move looks good jest git !!! DONE
+//w minimax po biciu ma tylko byæ dostêpne bicie pionkiem który bi³
+//
+
+
 void handle_press(sf::Vector2i mouse_Pos, std::list<sf::Vector2i> &available_pos, sf::Vector2i &picked_coords, int &is_moving);
 void handle_release(sf::Vector2i mouse_Pos, std::list<sf::Vector2i> &available_pos, sf::Vector2i &picked_coords, int &is_moving);
 bool look_for_capture(int board[8][8], int whos_turn);
 bool look_for_moves(int board[8][8],int whos_turn);
-std::list<sf::Vector2i> make_a_move(int board[8][8], sf::Vector2i from, sf::Vector2i where, int &is_moving);
 
-std::list<sf::Vector2i> legal_moves(sf::Vector2i pos, int is_moving, bool only_captures = false);
+std::list<sf::Vector2i> make_a_move(int board[8][8], sf::Vector2i from, sf::Vector2i where, int &is_moving);
+std::list<sf::Vector2i> legal_moves(int board[8][8], sf::Vector2i pos, int is_moving, bool only_captures = false);
+
 int static_evaluation(int board[8][8]) {
     int sum = 0;
     for (int i = 0; i < 8; ++i)
-        for (int j = 0; j < 8; ++j)
-            sum += board[i][j];
+        for (int j = 0; j < 8; ++j) {
+            if(i == 3|| i == 4)
+                sum += board[i][j];
+            else if(i == 2 || i == 5 || i == 1 || i == 6)
+                sum += board[i][j] * 0.8;
+            else if (i == 0 || i == 7)
+                sum += board[i][j] * 0.6;
+        }
     return sum;
 }
 struct Eval {
@@ -33,7 +46,7 @@ struct Eval {
     Eval() {}
 };
 
-Eval minimax(int board[8][8], int depth, bool maximizing_player, bool was_a_capture) {
+Eval minimax(int board[8][8], int depth, bool maximizing_player, bool was_a_capture, sf::Vector2i coords) {
     if (depth == 0)
         return static_evaluation(board);
     if(!look_for_moves(board, maximizing_player > 0 ? 1 : -1))
@@ -44,19 +57,22 @@ Eval minimax(int board[8][8], int depth, bool maximizing_player, bool was_a_capt
             for (int j = 0; j < 8; ++j)
             {
                 if(board[i][j] > 0)
-                    for (sf::Vector2i move : legal_moves({ i,j }, board[i][j], was_a_capture||look_for_capture(board,1))) {
+                    for (sf::Vector2i move : legal_moves(board ,{ i,j }, board[i][j], was_a_capture||look_for_capture(board,1))) {
+                        if (coords.x != i && coords.y != -1 && was_a_capture)
+                            continue;
                         int board_cp[8][8];
                         for(int z = 0; z < 8; ++z)
                             std::copy(std::begin(board[z]), std::end(board[z]), std::begin(board_cp[z]));
                         Eval eval;
-                        if (make_a_move(board_cp, { i,j }, move, board_cp[i][j]).size() != 0) {
-                            eval = minimax(board_cp, depth - 1, true, true);
+                        auto help = make_a_move(board_cp, { i,j }, move, board_cp[i][j]);
+                        if (help.size() != 0) {
+                            eval = minimax(board_cp, depth - 1, true, true,move);
                             eval.from = { i,j };
                             eval.to = move;
                             eval.capture = true;
                         }
                         else {
-                            eval = minimax(board_cp, depth - 1, false, false);
+                            eval = minimax(board_cp, depth - 1, false, false,move);
                             eval.from = { i,j };
                             eval.to = move;
                             eval.capture = false;
@@ -72,19 +88,21 @@ Eval minimax(int board[8][8], int depth, bool maximizing_player, bool was_a_capt
             for (int j = 0; j < 8; ++j)
             {
                 if (board[i][j] < 0)
-                    for (sf::Vector2i move : legal_moves({ i,j }, board[i][j], was_a_capture||look_for_capture(board,-1))) {
+                    for (sf::Vector2i move : legal_moves(board ,{ i,j }, board[i][j], was_a_capture||look_for_capture(board,-1))) {
+                        if (coords.x != i && coords.y != -1 && was_a_capture)
+                            continue;
                         int board_cp[8][8];
                         for (int z = 0; z < 8; ++z)
                             std::copy(std::begin(board[z]), std::end(board[z]), std::begin(board_cp[z]));
                         Eval eval;
                         if (make_a_move(board_cp, { i,j }, move, board_cp[i][j]).size() != 0) {
-                            eval = minimax(board_cp, depth - 1, false, true);
+                            eval = minimax(board_cp, depth - 1, false, true,move);
                             eval.from = { i,j };
                             eval.to = move;
                             eval.capture = true;
                         }
                         else {
-                            eval = minimax(board_cp, depth - 1, true, false);
+                            eval = minimax(board_cp, depth - 1, true, false,move);
                             eval.from = { i,j };
                             eval.to = move;
                             eval.capture = false;
@@ -107,16 +125,16 @@ int board[8][8] = {0, -1, 0, -1, 0, -1, 0, -1,
                     0, 1, 0, 1, 0, 1, 0, 1,
                     1, 0, 1, 0, 1, 0, 1, 0 };
   
-         /*
-int board[8][8] = { 0, -1, 0, 0, 0, -1, 0, -1,
-                    -1, 0, -1, 0, -1, 0, -1, 0,
-                    0, 1, 0, -1, 0, 0, 0, -1,
+   /*
+int board[8][8] = { 0, 0, 0, 0, 0, 0, 0, 0,
                     0, 0, 0, 0, 0, 0, 0, 0,
                     0, 0, 0, 0, 0, 0, 0, 0,
-                    1, 0, 1, 0, 1, 0, 1, 0,
-                    0, 1, 0, 1, 0, 1, 0, 1,
-                    1, 0, 1, 0, 1, 0, 1, 0 };
-                    */
+                    0, 0, 0, 0, 1, 0, 0, 0,
+                    0, 0, 0, 0, 0,-1, 0, 0,
+                    0, 0, 1, 0, 0, 0, 1, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0 };
+     */             
 
 
 int turn = white_turn;
@@ -134,6 +152,7 @@ int main()
     sf::Vector2i picked_coords;
 
     std::list<sf::Vector2i> legal_moves;
+    sf::Vector2i previous_cords = { 0,0 };
 
     bool was_capture = false;
 
@@ -142,8 +161,8 @@ int main()
     {
         sf::Event event;
 
-        if (!look_for_moves(board, turn))
-           break;
+        //if (!look_for_moves(board, turn))
+        //   break;
         while (window.pollEvent(event))
         {
             if (event.type == sf::Event::Closed)
@@ -153,45 +172,49 @@ int main()
         
 
         //BOT VS BOT
-        
+        /*
         if (clock.getElapsedTime().asSeconds() > 1) {
             Eval move;
             if (turn > 0)
-                move = minimax(board, 20, true, was_capture);
+                move = minimax(board, 7, true, was_capture,previous_cords);
             else
-                move = minimax(board, 20, false, was_capture);
+                move = minimax(board, 2, false, was_capture,previous_cords);
             std::cout <<std::endl<<move.eval<<" " << move.from.x << "." << move.from.y << " " << move.to.x 
                 << "." << move.to.y <<" "<<move.capture << " " << ((turn > 0)?"white":"black") << std::endl;
             make_a_move(board, move.from, move.to, board[move.from.x][move.from.y]);
             was_capture = move.capture;
+            previous_cords = move.to;
             if (!move.capture)
                 turn = -turn;
             clock.restart();
         }
         
+        */
 
         //Players vs BOT player is white
-        /*
+        
         if (turn < 0) {
             Eval move;
             Sleep(1000);
-            move = minimax(board, 7, false, was_capture);
+            move = minimax(board, 7, false, was_capture,previous_cords);
             make_a_move(board, move.from, move.to, board[move.from.x][move.from.y]);
             was_capture = move.capture;
+            previous_cords = move.to;
             if (!move.capture)
                 turn = -turn;
             clock.restart();
         }
-        */
+        
 
         //Players vs BOT player is black
         /*
         if (turn > 0) {
             Eval move;
             Sleep(1000);
-            move = minimax(board, 7, true, was_capture);
+            move = minimax(board, 7, true, was_capture,previous_coords);
             make_a_move(board, move.from, move.to, board[move.from.x][move.from.y]);
             was_capture = move.capture;
+            previous_cords = move.to;
             if (!move.capture)
                 turn = -turn;
             clock.restart();
@@ -241,8 +264,8 @@ void handle_press(sf::Vector2i mouse_Pos, std::list<sf::Vector2i> &x, sf::Vector
     is_moving = board[row][column];
     picked_coords.x = row;
     picked_coords.y = column;
+    x = legal_moves(board, picked_coords, is_moving, look_for_capture(board, turn)); // zamiana kolejnosci
     board[row][column] = 0;
-    x = legal_moves(picked_coords, is_moving,look_for_capture(board,turn));
 
 }
 
@@ -281,13 +304,15 @@ void handle_release(sf::Vector2i mouse_Pos, std::list<sf::Vector2i> &x, sf::Vect
 std::list<sf::Vector2i> make_a_move(int board[8][8], sf::Vector2i from, sf::Vector2i where, int &is_moving) {
     board[where.x][where.y] = is_moving;
     std::list<sf::Vector2i> legal_mv;
+    if (is_moving == 0)
+        return legal_mv;
     if (where.x == 0 && is_moving == 1)
         board[where.x][where.y] = 2;
     if (where.x == 7 && is_moving == -1)
         board[where.x][where.y] = -2;
     if (std::abs(where.x - from.x) == 2) {
         board[from.x + (where.x - from.x) / 2][from.y + (where.y - from.y) / 2] = 0;
-        legal_mv = legal_moves({ where.x,where.y }, board[where.x][where.y], true);
+        legal_mv = legal_moves(board, { where.x,where.y }, board[where.x][where.y], true);
         is_moving = 0;
         board[from.x][from.y] = 0;
         from = { where.x ,where.y };
@@ -304,7 +329,7 @@ bool look_for_capture(int board[8][8], int whos_turn) {
         for (int j = 0; j < 8; ++j) {
             if (board[i][j] != whos_turn && board[i][j] != whos_turn*2)
                 continue;
-            if (!legal_moves({ i,j }, board[i][j], true).empty())
+            if (!legal_moves(board, { i,j }, board[i][j], true).empty())
                 return true;
         }
     return false;
@@ -315,7 +340,7 @@ bool look_for_moves(int board[8][8], int whos_turn) {
         for (int j = 0; j < 8; ++j) {
             if (board[i][j] != whos_turn && board[i][j] != whos_turn * 2)
                 continue;
-            if (!legal_moves({ i,j }, board[i][j], false).empty())
+            if (!legal_moves(board, { i,j }, board[i][j], false).empty())
                 return true;
         }
     return false;
@@ -326,7 +351,7 @@ bool look_for_moves(int board[8][8], int whos_turn) {
 
 
 
-std::list<sf::Vector2i> legal_moves(sf::Vector2i pos, int is_moving, bool only_captures) {
+std::list<sf::Vector2i> legal_moves(int board[8][8],sf::Vector2i pos, int is_moving, bool only_captures) {
     std::list<sf::Vector2i> positions;
 
     //both logic
@@ -336,7 +361,7 @@ std::list<sf::Vector2i> legal_moves(sf::Vector2i pos, int is_moving, bool only_c
         (board[pos.x + (-1) * turn][pos.y - 1] == -turn || board[pos.x + (-1) * turn][pos.y - 1] == -turn * 2)
         && board[pos.x + (-2) * turn][pos.y - 2] == 0) {
         if (only_captures == false)
-            return legal_moves(pos, is_moving, true);
+            return legal_moves(board, pos, is_moving, true);
         positions.push_back({ pos.x + (-2) * turn, pos.y - 2 });
     }
         
@@ -347,13 +372,13 @@ std::list<sf::Vector2i> legal_moves(sf::Vector2i pos, int is_moving, bool only_c
         (board[pos.x + (-1) * turn][pos.y + 1] == -turn || board[pos.x + (-1) * turn][pos.y + 1] == -turn * 2)
         && board[pos.x + (-2) * turn][pos.y + 2] == 0) {
         if (only_captures == false)
-            return legal_moves(pos, is_moving, true);
+            return legal_moves(board, pos, is_moving, true);
         positions.push_back({ pos.x + (-2) * turn, pos.y + 2 }); 
     }
 
     if (!(is_moving == 2 || is_moving == -2)) {
         for (auto x : positions) {
-            std::cout << x.x << " " << x.y <<" ";
+            std::cout << x.x << " " << x.y << " ";
         }
         return positions;
 
@@ -366,7 +391,7 @@ std::list<sf::Vector2i> legal_moves(sf::Vector2i pos, int is_moving, bool only_c
         (board[pos.x + turn][pos.y - 1] == -turn || board[pos.x + turn][pos.y - 1] == -turn*2)
         && board[pos.x + 2 * turn][pos.y - 2] == 0){
         if (only_captures == false)
-            return legal_moves(pos, is_moving, true);
+            return legal_moves(board, pos, is_moving, true);
         positions.push_back({ pos.x + 2 * turn, pos.y - 2 });
     }
 
@@ -376,13 +401,13 @@ std::list<sf::Vector2i> legal_moves(sf::Vector2i pos, int is_moving, bool only_c
         (board[pos.x + turn][pos.y + 1] == -turn || board[pos.x + turn][pos.y + 1] == -turn * 2)
         && board[pos.x + 2 * turn][pos.y + 2] == 0) {
         if (only_captures == false)
-            return legal_moves(pos, is_moving, true);
+            return legal_moves(board, pos, is_moving, true);
         positions.push_back({ pos.x + 2 * turn, pos.y + 2 });
     }
+
 
     for (auto x : positions) {
         std::cout << x.x << " " << x.y << " ";
     }
-
     return positions;
 }
