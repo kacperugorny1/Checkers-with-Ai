@@ -132,9 +132,6 @@ std::list<sf::Vector2i> legal_moves(int board[8][8], int turn, sf::Vector2i pos,
     }
 
     if (!(is_moving == 2 || is_moving == -2)) {
-        for (auto x : positions) {
-            std::cout << x.x << " " << x.y << " ";
-        }
         return positions;
 
     }
@@ -161,8 +158,5 @@ std::list<sf::Vector2i> legal_moves(int board[8][8], int turn, sf::Vector2i pos,
     }
 
 
-    for (auto x : positions) {
-        std::cout << x.x << " " << x.y << " ";
-    }
     return positions;
 }

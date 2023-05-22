@@ -12,13 +12,18 @@
 #define black_turn -1
 
 
-
+//issues minmax is pretty stupid
+// black on minimax is even stupidier
+// minimax_ab is even more stupidier xd
+// OKAY ALPHA BETA REJECTS THE CASES WHEN THERE IS ONLY ONE LEGAL MOVE, AND IT IS VERY UNLIKELY TO TAKE
+// SO THATS THING TO FIX, IF THERE IS ONLY ONE LEGAL MOVE IT SHOULDNT CUT WHEN THE VALUE IS HORRENDOUS
 
 
 
 
 int main()
 {
+   /*
     int board[8][8] = { 0, -1, 0, -1, 0, -1, 0, -1,
                     -1, 0, -1, 0, -1, 0, -1, 0,
                     0, -1, 0, -1, 0, -1, 0, -1,
@@ -27,17 +32,18 @@ int main()
                     1, 0, 1, 0, 1, 0, 1, 0,
                     0, 1, 0, 1, 0, 1, 0, 1,
                     1, 0, 1, 0, 1, 0, 1, 0 };
+                    */
+    
 
-    /*
  int board[8][8] = { 0, 0, 0, 0, 0, 0, 0, 0,
-                     0, 0, 0, 0, 0, 0, 0, 0,
-                     0, 0, 0, 0, 0, 0, 0, 0,
-                     0, 0, 0, 0, 1, 0, 0, 0,
-                     0, 0, 0, 0, 0,-1, 0, 0,
-                     0, 0, 1, 0, 0, 0, 1, 0,
-                     0, 0, 0, 0, 0, 0, 0, 0,
-                     0, 0, 0, 0, 0, 0, 0, 0 };
-      */
+                    0, 0, 1, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, -1, 0, -1, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 1, 0, 1, 0, -1, 0,
+                    0, 0, 0, 1, 0, -1, 0, -1,
+                    0, 0, 1, 0, 0, 0, 0, 0 };
+
 
 
     int turn = white_turn;
@@ -72,13 +78,13 @@ int main()
         
 
         //BOT VS BOT
-        /*
+
         if (clock.getElapsedTime().asSeconds() > 1) {
             Eval move;
             if (turn > 0)
-                move = minimax_ab(board, 5, true, was_capture,previous_cords, -1000000000, 10000000);
+                move = minimax(board, 4, true, was_capture,previous_cords,-1000000000,1000000000);
             else
-                move = minimax(board, 5, false, was_capture,previous_cords);
+                move = minimax(board, 4, false, was_capture,previous_cords, -1000000000, 1000000000);
             std::cout <<std::endl<<move.eval<<" " << move.from.x << "." << move.from.y << " " << move.to.x 
                 << "." << move.to.y <<" "<<move.capture << " " << ((turn > 0)?"white":"black") << std::endl;
             make_a_move(board,turn, move.from, move.to, board[move.from.x][move.from.y]);
@@ -88,16 +94,17 @@ int main()
                 turn = -turn;
             clock.restart();
         }
-        */
+
+     
         
         
 
         //Players vs BOT player is white
-       
+       /*
         if (turn < 0) {
             Eval move;
             Sleep(1000);
-            move = minimax_ab(board, 8, false, was_capture,previous_cords, -1000000000, 10000000);
+            move = minimax(board, 3, false, was_capture,previous_cords);
             make_a_move(board,turn, move.from, move.to, board[move.from.x][move.from.y]);
             was_capture = move.capture;
             previous_cords = move.to;
@@ -105,6 +112,7 @@ int main()
                 turn = -turn;
             clock.restart();
         }
+        */
        
 
         //Players vs BOT player is black
@@ -112,8 +120,8 @@ int main()
         if (turn > 0) {
             Eval move;
             Sleep(1000);
-            move = minimax(board, 7, true, was_capture,previous_coords);
-            make_a_move(board, move.from, move.to, board[move.from.x][move.from.y]);
+            move = minimax(board, 6, true, was_capture, previous_cords);
+            make_a_move(board,turn, move.from, move.to, board[move.from.x][move.from.y]);
             was_capture = move.capture;
             previous_cords = move.to;
             if (!move.capture)
