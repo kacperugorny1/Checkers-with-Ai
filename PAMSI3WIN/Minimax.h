@@ -11,7 +11,6 @@ struct Eval {
     Eval(int evals) { eval = evals; }
     Eval() {}
 };
-
-int static_evaluation(int board[8][8]);
+int evaluation(int board[8][8]);
 Eval minimax(int board[8][8], int depth, bool maximizing_player, bool was_a_capture, sf::Vector2i coords);
 Eval minimax(int board[8][8], int depth, bool maximizing_player, bool was_a_capture, sf::Vector2i coords, int alpha, int beta);
