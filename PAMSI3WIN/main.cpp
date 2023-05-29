@@ -10,32 +10,12 @@
 
 #define white_turn 1
 #define black_turn -1
-#define pvp 0
-#define botvbot 1
-#define player_white 2
-#define player_black 3
 
-
-//issues minmax is pretty stupid
-// black on minimax is even stupidier
-// minimax_ab is even more stupidier xd
-
-
-
-// daje sie zbic jakby nie widzial ze bedzie zbity?? król podk³ada sie pod piona
-//minimax nie widzi ze moge go zbic?
-int count_peices(int board[8][8]) {
-    int count = 0;
-    for (int i = 0; i < 8; ++i)
-        for (int j = 0; j < 8; ++j)
-            count += board[i][j] != 0 ? count + 1 : count;
-    return count;
-}
 
 
 int main()
 {
-
+    // reprezentacja planszy
     int board[8][8] = {0, -1, 0, -1, 0, -1, 0, -1,
                     -1, 0, -1, 0, -1, 0, -1, 0,
                     0, -1, 0, -1, 0, -1, 0, -1,
@@ -45,39 +25,49 @@ int main()
                     0, 1, 0, 1, 0, 1, 0, 1,
                     1, 0, 1, 0, 1, 0, 1, 0 };
                 
-    /*
-    int board[8][8] = { 0, -1, 0, -1, 0, -1, 0, -1,
-                        -1, 0, 0, 0, 0, 0, 0, 0,
-                        0, 0, 0, -1, 0, 0, 0, 1,
-                        0, 0, 0, 0, 0, 0, -1, 0,
-                        0, 0, 0, 0, 0, 0, 0, 1,
-                        1, 0, 1, 0, 0, 0, 0, 0,
-                        0, 0, 0, 1, 0, 0, 0, 0,
-                        1, 0, 1, 0, 0, 0, 1, 0 };   
-      */                  
+                     
 
     int turn = white_turn;
-
     sf::ContextSettings settings;
     settings.antialiasingLevel = 4;
+    //Otwarcie okna
     sf::RenderWindow window(sf::VideoMode(1280, 800), "Warcaby", sf::Style::Default, settings);
     sf::Clock clock;
-    int frames = 0;
     int is_moving = 0;
     int num_of_moves = 0;
-    int depth = 10;
+    int depth = 8;
+    int depth_1 = 8;
     int gamemode = 0;
     sf::Vector2i picked_coords;
-
     std::list<sf::Vector2i> legal_moves;
     sf::Vector2i previous_cords = { 0,0 };
 
     bool was_capture = false;
+
     draw_board(window, board, is_moving, sf::Mouse::getPosition(window), turn);
+
+
+    //Wybór trybu gry
+    std::cout << "Wybierz tryb gry, 1 - bot vs bot, 2 - gracz czarny, 3 - gracz bialy, ka¿da inna - gracz vs gracz\n";
+    std::cin >> gamemode;
+    if (gamemode == 2 || gamemode == 3) {
+        std::cout << "Podaj glebie bota\n";
+        std::cin >> depth;
+    }
+    else if (gamemode == 1) {
+        std::cout << "Podaj glebie bota bialego\n";
+        std::cin >> depth;
+        std::cout << "Podaj glebie bota czarnego\n";
+        std::cin >> depth_1;
+    }
+
+
+
+    //G³ówna pêtla
     while (window.isOpen())
     {
         sf::Event event;
-
+        //Sprawdz czy koniec gry
         if (!look_for_moves(board, turn) && is_moving == 0)
            break;
         while (window.pollEvent(event))
@@ -86,14 +76,14 @@ int main()
                 window.close();
         }
         
-        
-        /*
-        if (clock.getElapsedTime().asSeconds() > 1) {
+
+        //BOT vs BOT
+        if (gamemode == 1 && clock.getElapsedTime().asSeconds() > 1) {
             Eval move;
             if (turn > 0)
-                move = minimax(board, 2, true, was_capture, previous_cords, -1000000000, 1000000000);
+                move = minimax(board, depth, true, was_capture, previous_cords, -1000000000, 1000000000);
             else
-                move = minimax(board, 4, false, was_capture,previous_cords, -1000000000, 1000000000);
+                move = minimax(board, depth_1, false, was_capture,previous_cords, -1000000000, 1000000000);
             std::cout <<std::endl<<move.eval<<" " << move.from.x << "." << move.from.y << " " << move.to.x 
                 << "." << move.to.y <<" "<<move.capture << " " << ((turn > 0)?"white":"black") << std::endl;
             make_a_move(board,turn, move.from, move.to, board[move.from.x][move.from.y]);
@@ -103,14 +93,14 @@ int main()
                 turn = -turn;
             clock.restart();
         }
-        */
+        
      
         
         
 
         //Players vs BOT player is white
-        /*
-        if (turn < 0) {
+        
+        if (turn < 0 && gamemode == 3) {
             Eval move;
             Sleep(1000);
             move = minimax(board, depth, false, was_capture, previous_cords, -1000000000, 1000000000);
@@ -126,13 +116,13 @@ int main()
                 turn = -turn;
             clock.restart();
             
-        }*/
+        }
         
        
 
         //Players vs BOT player is black
         
-        if (turn > 0) {
+        if (turn > 0 && gamemode == 2) {
             Eval move;
             Sleep(1000);
             move = minimax(board, depth, true, was_capture, previous_cords, -1000000000, 1000000000);
@@ -146,16 +136,22 @@ int main()
             clock.restart();
         }
         
+
+        //Wciœniêcie lewego przycisku myszy
         if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
             handle_press(board,turn,sf::Mouse::getPosition(window), legal_moves, picked_coords, is_moving);
         }
 
-        
+        //Wciœniêcie prawego przycisku myszy
         if (event.type == sf::Event::MouseButtonReleased) {
             handle_release(board,turn,sf::Mouse::getPosition(window), legal_moves, picked_coords, is_moving);
         }
+
+        //Rysuj klatkê
         draw_board(window, board, is_moving, sf::Mouse::getPosition(window), turn);
     }
+
+    //Rysuj klatkê ostatni¹ - po wygranej jednej ze stron
     draw_board(window, board, is_moving, sf::Mouse::getPosition(window), turn, true);
     while (true) {
         sf::Event event;

@@ -1,6 +1,8 @@
 #include "Gamelogic.h"
 
-void handle_press(int board[8][8],int& turn, sf::Vector2i mouse_Pos, std::list<sf::Vector2i>& x, sf::Vector2i& picked_coords, int& is_moving) {
+
+
+void handle_press(int board[8][8],int& turn, sf::Vector2i mouse_Pos, std::list<sf::Vector2i>& available_pos, sf::Vector2i& picked_coords, int& is_moving) {
     if (is_moving != 0)
         return;
     if (mouse_Pos.x < 340 || mouse_Pos.x>940 || mouse_Pos.y < 100 || mouse_Pos.y > 700)
@@ -8,17 +10,17 @@ void handle_press(int board[8][8],int& turn, sf::Vector2i mouse_Pos, std::list<s
 
     int column = (mouse_Pos.x - 340) / 75;
     int row = (mouse_Pos.y - 100) / 75;
-    if (x.empty() && picked_coords.x == row && picked_coords.y == column) {
+    if (available_pos.empty() && picked_coords.x == row && picked_coords.y == column) { // chyba ten if jest do wywalenia - nie przeszkadza ale nic nie robi, dla pewnosci narazie zostaje
         is_moving = board[row][column];
         board[row][column] = 0;
         return;
     }
-    if (!(turn < 0 && board[row][column] < 0) && !(turn > 0 && board[row][column] > 0))
+    if (!(turn < 0 && board[row][column] < 0) && !(turn > 0 && board[row][column] > 0)) // zlapanie nie tego piona w nie swojej turze
         return;
     is_moving = board[row][column];
     picked_coords.x = row;
     picked_coords.y = column;
-    x = legal_moves(board, turn, picked_coords, is_moving, look_for_capture(board, turn)); // zamiana kolejnosci
+    available_pos = legal_moves(board, turn, picked_coords, is_moving, look_for_capture(board, turn));
     board[row][column] = 0;
 
 }
@@ -26,7 +28,7 @@ void handle_press(int board[8][8],int& turn, sf::Vector2i mouse_Pos, std::list<s
 
 
 
-void handle_release(int board[8][8], int& turn, sf::Vector2i mouse_Pos, std::list<sf::Vector2i>& x, sf::Vector2i& picked_coords, int& is_moving) {
+void handle_release(int board[8][8], int& turn, sf::Vector2i mouse_Pos, std::list<sf::Vector2i>& available_pos, sf::Vector2i& picked_coords, int& is_moving) {
     if (is_moving == 0)
         return;
     if (mouse_Pos.x < 340 || mouse_Pos.x > 940 || mouse_Pos.y < 100 || mouse_Pos.y > 700) {
@@ -38,11 +40,11 @@ void handle_release(int board[8][8], int& turn, sf::Vector2i mouse_Pos, std::lis
 
     sf::Vector2i indexes = { (mouse_Pos.y - 100) / 75 , (mouse_Pos.x - 340) / 75 };
 
-    for (sf::Vector2i coord : x) {
+    for (sf::Vector2i coord : available_pos) {
         if (coord != indexes)
             continue;
-        x = make_a_move(board,turn, picked_coords, coord, is_moving);
-        if (x.size() != 0)
+        available_pos = make_a_move(board,turn, picked_coords, coord, is_moving);
+        if (available_pos.size() != 0)
             return;
 
         is_moving = 0;
@@ -56,15 +58,20 @@ void handle_release(int board[8][8], int& turn, sf::Vector2i mouse_Pos, std::lis
 
 }
 
+
+
 std::list<sf::Vector2i> make_a_move(int board[8][8],int turn, sf::Vector2i from, sf::Vector2i where, int& is_moving) {
     board[where.x][where.y] = is_moving;
     std::list<sf::Vector2i> legal_mv;
     if (is_moving == 0)
         return legal_mv;
+    // jeœli dojdzie na koniec planszy zmiana na króla
     if (where.x == 0 && is_moving == 1)
         board[where.x][where.y] = 2;
     if (where.x == 7 && is_moving == -1)
         board[where.x][where.y] = -2;
+
+    // jeœli ruch wykonany o 2 pola to zbij pionka i sprawdŸ czy jest mo¿liwoœæ kolejnego bicia
     if (std::abs(where.x - from.x) == 2) {
         board[from.x + (where.x - from.x) / 2][from.y + (where.y - from.y) / 2] = 0;
         legal_mv = legal_moves(board, turn, { where.x,where.y }, board[where.x][where.y], true);
@@ -90,6 +97,7 @@ bool look_for_capture(int board[8][8], int whos_turn) {
     return false;
 }
 
+
 bool look_for_moves(int board[8][8], int whos_turn) {
     for (int i = 0; i < 8; ++i)
         for (int j = 0; j < 8; ++j) {
@@ -100,10 +108,6 @@ bool look_for_moves(int board[8][8], int whos_turn) {
         }
     return false;
 }
-
-
-
-
 
 
 std::list<sf::Vector2i> legal_moves(int board[8][8], int turn, sf::Vector2i pos, int is_moving, bool only_captures) {

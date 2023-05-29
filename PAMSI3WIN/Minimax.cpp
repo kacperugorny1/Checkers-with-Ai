@@ -1,6 +1,5 @@
 #include "Minimax.h"
 
-
 int evaluation(int board[8][8]) {
     int sum = 0;
     for (int i = 0; i < 8; ++i)
@@ -33,8 +32,6 @@ int evaluation(int board[8][8]) {
         return 999999;
     return sum;
 }
-
-
 
 Eval minimax(int board[8][8], int depth, bool maximizing_player, bool was_a_capture, sf::Vector2i coords) {
     if (depth == 0 ){
@@ -137,7 +134,7 @@ Eval minimax(int board[8][8], int depth, bool maximizing_player, bool was_a_capt
                     eval.to = move;
                     maxEval = maxEval.eval > eval.eval ? maxEval : eval;
                     alpha = alpha > eval.eval ? alpha : eval.eval;
-                    if (beta <= alpha && moves.size() > 1) {
+                    if (beta < alpha && moves.size() > 1) {
                         return maxEval;
                     }
                 }
@@ -172,7 +169,7 @@ Eval minimax(int board[8][8], int depth, bool maximizing_player, bool was_a_capt
                     eval.to = move;
                     minEval = minEval.eval < eval.eval ? minEval : eval;
                     beta = beta < eval.eval ? beta : eval.eval;
-                    if (beta <= alpha && moves.size() > 1) {
+                    if (beta < alpha && moves.size() > 1) {
                         return minEval;
                     }
                 }

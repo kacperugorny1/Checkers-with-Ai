@@ -1,5 +1,7 @@
 #include "window.h"
 
+
+
 void draw_board(sf::RenderWindow& window, int board[8][8], int is_moving, sf::Vector2i mouse_pos, int turn, bool end) {
     sf::RectangleShape rect(sf::Vector2f(75, 75));
     sf::CircleShape piece(30);
